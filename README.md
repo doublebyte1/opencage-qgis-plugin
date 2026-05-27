@@ -17,7 +17,7 @@ You can do this, if you want to develop/test the plugin. Once the it is availabl
 
 The source code is the sub-folder `opencage_geocoder`, on this repository. To find out where the plugin folder is located in your machine, in the top-level menu of QGIS choose `Settings->User Profiles->Open Active Folder`.  From that path, navigate to `Python->Plugins`
 
-<img src="./active-qgis-folder.png" width="50%">
+<img src="./docs/active-qgis-folder.png" width="50%">
 
 After copying the files, you may need to restart QGIS in order for the plugin to be detected.
 
@@ -25,57 +25,57 @@ After copying the files, you may need to restart QGIS in order for the plugin to
 
 Access the top level menu and choose `Plugins->Install Plugins`.
 
-<img src="./plugin-manager.png" width="50%">
+<img src="./docs/plugin-manager.png" width="50%">
 
  On the left panel, select `Installed`: the opencage geocoder plugin should be listed. Select it to enable it and close the dialog.
 
- <img src="./enable-plugin.png" width="50%">
+ <img src="./docs/enable-plugin.png" width="50%">
 
 ## Using the Plugin
 
 After enabling the plugin, its algorithms will be available in the `processing toolbox`. To enable the toolbox choose `Processing->Toolbox` in the top level menu. This will enable panel on the right side of QGIS.
 
- <img src="./opening-processing.png" width="50%">
+ <img src="./docs/opening-processing.png" width="50%">
 
 You can browse the processing panel to find the `Opencage` provider, or type `opencage` in the searchbar, to filter it. Under the `Opencage` provider, you will find the available algorithms. You can click any of them to run them.
 
- <img src="./processing-toolbox.png" width="50%">
+ <img src="./docs/processing-toolbox.png" width="50%">
 
 ### Forward Geocoding - geocoding addresses
 
 Before runnning this algorithm you will need a text file (csv), with a field which contains locations in natural language (addresses, cities, postcodes); this will be the input of the geocoding algorithm. You can use the [sample](./opencage_geocoder/test/data/sample_small.csv) provided in the test folder. Add it to QGIS, by dragging the file into the layers panel on the left
 
- <img src="./address-file.png" width="50%">
+ <img src="./docs/address-file.png" width="50%">
 
 To run the forward geocoding algorithm, click in `Geocoding addresses`. This will open a dialog with options. In the input layer, choose the file you just added (it should be added by default, if you don't have any more layers). Then select the field which contains the location you want to geocode; in this case, `Morada`. Select the other options as appropriate and choose `Run`. 
 
- <img src="./forward-geocoder.png" width="50%">
+ <img src="./docs/forward-geocoder.png" width="50%">
 
 The geocode process will run in the background and show you a log of what is happening. When completed it will automatically add a vector file to the QGIS layer browser, which contains the geocoded locations, along with other structured information (depending on the options you selected). If you want to persist this file, you should export the layer to a geospatial format (e.g.: Geopackage, GeoJSON, etc).
 
- <img src="./run-forward.png" width="50%">
+ <img src="./docs/run-forward.png" width="50%">
 
 The original address used for geocoding is appended as an attribute. 
 
-<img src="./results-forward.png" width="50%">
+<img src="./docs/results-forward.png" width="50%">
 
 ### Reverse Geocoding - geocoding coordinates
 
 Before runnning this algorithm you will need a vector file with point geometries (e.g.: GeoPackage, GeoJSON, etc); this will be the input of the geocoding algorithm. You can use the [sample](./opencage_geocoder/test/data/portuguese-poi_small.gpkg) provided in the test folder. Add it to QGIS, by dragging the file into the layers panel on the left. You can use a vector file with any CRS; regardless, the geometries will always be projected to WGS84 during geocoding and the result file will always be in that projection.
 
- <img src="./point-file.png" width="50%">
+ <img src="./docs/point-file.png" width="50%">
 
 To run the reverse geocoding algorithm, click in `Geocoding coordinates`. This will open a dialog with options. In the input layer, choose the file you just added (it should be added by default, if you don't have any more layers). Select the other options as appropriate and choose `Run`. 
 
- <img src="./reverse-geocoder.png" width="50%">
+ <img src="./docs/reverse-geocoder.png" width="50%">
 
 The geocode process will run in the background and show you a log of what is happening. When completed it will automatically add a vector file to the QGIS layer browser, which contains the geocoded locations, along with other structured information (depending on the options you selected). If you want to persist this file, you should export the layer to a geospatial format (e.g.: Geopackage, GeoJSON, etc).
 
- <img src="./run-reverse.png" width="50%">
+ <img src="./docs/run-reverse.png" width="50%">
 
 The coordinates used for geocoding are appended as attributes. They are always translated to WGS84, if they were originally in a different CRS.
 
-<img src="./results-reverse.png" width="50%">
+<img src="./docs/results-reverse.png" width="50%">
 
 ## Develop
 
@@ -113,7 +113,7 @@ The [data](./opencage_geocoder/test/data/) folder contains sample data that can 
 
 ## Who is OpenCage GmbH?
 
-<a href="https://opencagedata.com"><img src="./opencage_logo_300_150.png"></a>
+<a href="https://opencagedata.com"><img src="./docs/opencage_logo_300_150.png"></a>
 
 We run the [OpenCage Geocoding API](https://opencagedata.com). Learn more [about us](https://opencagedata.com/about). 
 
