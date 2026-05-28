@@ -49,8 +49,8 @@ API_KEY = os.environ["OPENCAGE_KEY"]
 
 lat=32.797545
 lng=-17.04206
-simple_result = "Grutas e Centro do Vulcanismo, Estrada Dom João V, 9240-221 São Vicente, Madeira, Portugal"
-address_only = "Estrada Dom João V, 9240-221 São Vicente, Madeira, Portugal"
+simple_result = "Grutas e Centro do Vulcanismo, Estrada Dom João V, 9240-218 São Vicente, Madeira, Portugal"
+address_only = "Estrada Dom João V, 9240-218 São Vicente, Madeira, Portugal"
 
 class TestReverseGeoCoding(unittest.TestCase):
     """

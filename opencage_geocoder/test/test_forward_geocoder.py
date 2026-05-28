@@ -44,9 +44,10 @@ DATA_FOLDER = path.join(path.dirname(__file__), "data")
 # Note: Export yout api key from the command line, before running this test
 API_KEY = os.environ["OPENCAGE_KEY"]
 
-str= "Rua da Misericordia, 230"
-simple_result = "Rua da Misericordia, 7430-142 Crato, Portugal"
-result_options = "Rua Da Misericordia, Quilombo do Alto do Tororó, Salvador - BA, 40800-570, Brésil"
+query_simple = "Praça do Comércio, Lisboa, Portugal"
+query_options = "Avenida Paulista, São Paulo, Brazil"
+simple_result = "Comércio Square, 1100-148 Lisbon, Portugal"
+result_options = "Avenida Paulista, Consolação, São Paulo - SP, 01414-000, Brésil"
 
 class TestForwardGeoCoding(unittest.TestCase):
     """
@@ -66,7 +67,7 @@ class TestForwardGeoCoding(unittest.TestCase):
         Simple forward geocoding test: sends an address string and
         should return a geocoded string.
         """
-        json = self.openCageGeocoder.geocoder.geocode(str)
+        json = self.openCageGeocoder.geocoder.geocode(query_simple)
         formatted = json[0]['formatted']
         # print(formatted)
 
@@ -77,7 +78,7 @@ class TestForwardGeoCoding(unittest.TestCase):
         Forward geocoding test with options: sends an address string
         with options and should return a geocoded string.
         """
-        json = self.openCageGeocoder.geocoder.geocode(str, abbrv=0, no_annotations=1, 
+        json = self.openCageGeocoder.geocoder.geocode(query_options, abbrv=0, no_annotations=1,
                                      no_record=0, language="fr",
                                      countrycode="BR"
                                      )
@@ -93,20 +94,12 @@ class TestForwardGeoCoding(unittest.TestCase):
         from a text(csv) file and should return a specific number of
         geocoded addresses.
         """
-        filename = open(path.join(DATA_FOLDER, 'sample_small.csv'), 'r')
-        
-        # creating dictreader object
-        file = csv.DictReader(filename)
-        
-        # creating empty list
         results = []
-        
-        # iterating over each row and append
-        # values to empty list
-        for col in file:
-            json = self.openCageGeocoder.geocoder.geocode(col['Morada_'],countrycode="PT,BR")
-            if json:
-                results.append(json[0]['formatted'])
-                # print(results[len(results)-1])
 
-        self.assertEqual(3, len(results), "Failed to geocode address file.")
+        with open(path.join(DATA_FOLDER, 'sample_small.csv'), 'r') as filename:
+            for col in csv.DictReader(filename):
+                json = self.openCageGeocoder.geocoder.geocode(col['Morada_'],countrycode="PT,BR")
+                if json:
+                    results.append(json[0]['formatted'])
+
+        self.assertEqual(4, len(results), "Failed to geocode address file.")
