@@ -239,13 +239,16 @@ class OpenCageGeocode:
     #     backoff.expo,
     #     (UnknownError, requests.exceptions.RequestException),
     #     max_tries=5, max_time=backoff_max_time)
-    def _opencage_request(self, params):
+    def _opencage_request(self, params, timeout=30):
 
-        if self.session:
-            response = self.session.get(self.url, params=params)
-        else:
-            response = requests.get(self.url, params=params) # pylint: disable=missing-timeout
-
+        try:
+            if self.session:
+                response = self.session.get(self.url, params=params, timeout=timeout)
+            else:
+                response = requests.get(self.url, params=params, timeout=timeout) # pylint: disable=missing-timeout
+        except requests.exceptions.Timeout as excinfo:
+            raise UnknownError("Request timed out") from excinfo
+        
         try:
             response_json = response.json()
         except ValueError as excinfo:
