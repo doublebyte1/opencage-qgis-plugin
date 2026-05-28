@@ -1,89 +1,142 @@
 #!/usr/bin/env python
-# coding=utf-8
 """This script uploads a plugin package to the plugin repository.
-        Authors: A. Pasotti, V. Picavet
-        git sha              : $TemplateVCSFormat
+Authors: A. Pasotti, V. Picavet
+git sha              : $TemplateVCSFormat
 """
 
-import sys
+import base64
 import getpass
-import xmlrpc.client
+import http.client
+import os
+import sys
+import urllib.parse
 from optparse import OptionParser
 
+import defusedxml.ElementTree as ET  # noqa: N817
+
 # Configuration
-PROTOCOL = 'https'
-SERVER = 'plugins.qgis.org'
-PORT = '443'
-ENDPOINT = '/plugins/RPC2/'
-VERBOSE = False
+PROTOCOL = "https"
+SERVER = "plugins.qgis.org"
+PORT = "443"
+ENDPOINT = "/plugins/RPC2/"
+
+
+def _post_upload(address, plugin_data):
+    """POST a plugin.upload XML-RPC call and return the raw response bytes."""
+    parsed = urllib.parse.urlparse(address)
+    if parsed.scheme not in ("http", "https"):
+        raise ValueError("Address must use http or https scheme: %s" % address)
+
+    encoded = base64.b64encode(plugin_data).decode("ascii")
+    payload = (
+        (
+            "<?xml version='1.0'?>"
+            "<methodCall>"
+            "<methodName>plugin.upload</methodName>"
+            "<params><param>"
+            "<value><base64>{}</base64></value>"
+            "</param></params>"
+            "</methodCall>"
+        )
+        .format(encoded)
+        .encode("utf-8")
+    )
+
+    auth = base64.b64encode(
+        "{}:{}".format(parsed.username, parsed.password).encode()
+    ).decode("ascii")
+    headers = {"Content-Type": "text/xml", "Authorization": "Basic " + auth}
+    port = parsed.port or (443 if parsed.scheme == "https" else 80)
+
+    if parsed.scheme == "https":
+        conn = http.client.HTTPSConnection(parsed.hostname, port)
+    else:
+        conn = http.client.HTTPConnection(parsed.hostname, port)
+
+    conn.request("POST", parsed.path, body=payload, headers=headers)
+    return conn.getresponse().read()
+
+
+def _parse_response(xml_data):
+    """Parse an XML-RPC response using defusedxml; raise on fault."""
+    root = ET.fromstring(xml_data)
+    fault = root.find("fault")
+    if fault is not None:
+        members = {}
+        for member in fault.iter("member"):
+            name = member.find("name").text
+            value_el = member.find("value")
+            members[name] = next(iter(value_el), value_el).text
+        raise RuntimeError("Fault {faultCode}: {faultString}".format(**members))
+    return tuple(int(v.text) for v in root.iter("int"))
 
 
 def main(parameters, arguments):
-    """Main entry point.
-
-    :param parameters: Command line parameters.
-    :param arguments: Command line arguments.
-    """
-    address = "{protocol}://{username}:{password}@{server}:{port}{endpoint}".format(
+    address = ("{protocol}://{username}:{password}@{server}:{port}{endpoint}").format(
         protocol=PROTOCOL,
         username=parameters.username,
         password=parameters.password,
         server=parameters.server,
         port=parameters.port,
-        endpoint=ENDPOINT)
+        endpoint=ENDPOINT,
+    )
     print("Connecting to: %s" % hide_password(address))
 
-    server = xmlrpc.client.ServerProxy(address, verbose=VERBOSE)
-
     try:
-        with open(arguments[0], 'rb') as handle:
-            plugin_id, version_id = server.plugin.upload(
-                xmlrpc.client.Binary(handle.read()))
+        with open(arguments[0], "rb") as handle:
+            response_data = _post_upload(address, handle.read())
+        plugin_id, version_id = _parse_response(response_data)
         print("Plugin ID: %s" % plugin_id)
         print("Version ID: %s" % version_id)
-    except xmlrpc.client.ProtocolError as err:
+    except http.client.HTTPException as err:
         print("A protocol error occurred")
-        print("URL: %s" % hide_password(err.url, 0))
-        print("HTTP/HTTPS headers: %s" % err.headers)
-        print("Error code: %d" % err.errcode)
-        print("Error message: %s" % err.errmsg)
-    except xmlrpc.client.Fault as err:
+        print("Error: %s" % err)
+    except RuntimeError as err:
         print("A fault occurred")
-        print("Fault code: %d" % err.faultCode)
-        print("Fault string: %s" % err.faultString)
+        print(str(err))
 
 
 def hide_password(url, start=6):
-    """Returns the http url with password part replaced with '*'.
-
-    :param url: URL to upload the plugin to.
-    :type url: str
-
-    :param start: Position of start of password.
-    :type start: int
-    """
-    start_position = url.find(':', start) + 1
-    end_position = url.find('@')
+    """Returns the http url with password part replaced with '*'."""
+    start_position = url.find(":", start) + 1
+    end_position = url.find("@")
     return "%s%s%s" % (
         url[:start_position],
-        '*' * (end_position - start_position),
-        url[end_position:])
+        "*" * (end_position - start_position),
+        url[end_position:],
+    )
 
 
 if __name__ == "__main__":
     parser = OptionParser(usage="%prog [options] plugin.zip")
     parser.add_option(
-        "-w", "--password", dest="password",
-        help="Password for plugin site", metavar="******")
+        "-w",
+        "--password",
+        dest="password",
+        help="Password for plugin site. "
+        "You can use environment variable 'PLUGIN_UPLOAD_PASSWORD', "
+        "or the password will be prompted on runtime.",
+        metavar="******",
+    )
     parser.add_option(
-        "-u", "--username", dest="username",
-        help="Username of plugin site", metavar="user")
+        "-u",
+        "--username",
+        dest="username",
+        help="Username of plugin site. "
+        "You can use environment variable 'PLUGIN_UPLOAD_USERNAME', "
+        "or the username will be prompted on runtime.",
+        metavar="user",
+    )
     parser.add_option(
-        "-p", "--port", dest="port",
-        help="Server port to connect to", metavar="80")
+        "-p", "--port", dest="port", help="Server port to connect to", metavar="80"
+    )
     parser.add_option(
-        "-s", "--server", dest="server",
-        help="Specify server name", metavar="plugins.qgis.org")
+        "-s",
+        "--server",
+        dest="server",
+        help="Specify server name",
+        metavar="plugins.qgis.org",
+    )
     options, args = parser.parse_args()
     if len(args) != 1:
         print("Please specify zip file.\n")
@@ -94,16 +147,18 @@ if __name__ == "__main__":
     if not options.port:
         options.port = PORT
     if not options.username:
-        # interactive mode
-        username = getpass.getuser()
-        print("Please enter user name [%s] :" % username, end=' ')
-
-        res = input()
-        if res != "":
-            options.username = res
-        else:
+        username = os.environ.get("PLUGIN_UPLOAD_USERNAME")
+        if username:
             options.username = username
+        else:
+            username = getpass.getuser()
+            print("Please enter user name [%s] :" % username, end=" ")
+            res = input()
+            options.username = res if res != "" else username
     if not options.password:
-        # interactive mode
-        options.password = getpass.getpass()
+        password = os.environ.get("PLUGIN_UPLOAD_PASSWORD")
+        if password:
+            options.password = password
+        else:
+            options.password = getpass.getpass()
     main(options, args)
