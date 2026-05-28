@@ -1,5 +1,6 @@
 # import qgis libs so that ve set the correct sip api version
 import atexit
+import gc
 import os
 import tempfile
 
@@ -16,5 +17,13 @@ if QgsApplication.instance() is None:
                           tempfile.mkdtemp(prefix="qgis-test-"))
     _qgs_app = QgsApplication([], False)
     _qgs_app.initQgis()
-    # Tear down cleanly on exit (silences "QThreadStorage ... destroyed").
-    atexit.register(_qgs_app.exitQgis)
+
+    @atexit.register
+    def _teardown_qgis():
+        # Destroy the QgsApplication while the main thread is still alive,
+        # otherwise Qt prints "QThreadStorage ... destroyed before end of
+        # thread" during interpreter shutdown.
+        global _qgs_app
+        _qgs_app.exitQgis()
+        del _qgs_app
+        gc.collect()
