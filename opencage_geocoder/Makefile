@@ -40,7 +40,7 @@ SOURCES = \
 	__init__.py \
 	gui_utils.py \
 	processing/forward.py \
-	processing/reverse.py \	
+	processing/reverse.py \
 	processing/provider.py \
 	gui/gui_utils.py
 
@@ -170,18 +170,25 @@ zip: deploy dclean
 	rm -f $(PLUGINNAME).zip
 	cd $(HOME)/$(QGISDIR)/python/plugins; zip -9r $(CURDIR)/$(PLUGINNAME).zip $(PLUGINNAME)
 
+VERSION ?= HEAD
+
 package: compile
 	# Create a zip package of the plugin named $(PLUGINNAME).zip.
 	# This requires use of git (your plugin development directory must be a
 	# git repository).
-	# To use, pass a valid commit or tag as follows:
-	#   make package VERSION=Version_0.3.2
+	# To use, optionally pass a valid commit or tag as follows:
+	#   make package VERSION=v1.0.2
+	# Defaults to HEAD. The archive uses the $(PLUGINNAME) subtree as its root
+	# so the zip has a single top-level $(PLUGINNAME)/ folder, as required by
+	# plugins.qgis.org.
 	@echo
 	@echo "------------------------------------"
 	@echo "Exporting plugin to zip package.	"
 	@echo "------------------------------------"
 	rm -f $(PLUGINNAME).zip
-	git archive --prefix=$(PLUGINNAME)/ -o $(PLUGINNAME).zip $(VERSION)
+	# Run from the repo top-level so the $(PLUGINNAME) subtree path resolves
+	# regardless of where make was invoked, but write the zip back here.
+	cd "$$(git rev-parse --show-toplevel)" && git archive --prefix=$(PLUGINNAME)/ -o "$(CURDIR)/$(PLUGINNAME).zip" $(VERSION):$(PLUGINNAME)
 	echo "Created package: $(PLUGINNAME).zip"
 
 upload: zip
