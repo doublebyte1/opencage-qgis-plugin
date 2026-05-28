@@ -8,7 +8,7 @@
 name=OpenCage Geocoder
 qgisMinimumVersion=3.0
 description=Geocoding using the OpenCage API
-version=1.0.1
+version=1.1.0
 author=doublebyte
 email=info@byteroad.net
 
@@ -21,8 +21,11 @@ repository=https://github.com/OpenCageData/opencage-qgis-plugin
 # Recommended items:
 
 hasProcessingProvider=yes
-# Uncomment the following line and add your changelog:
-# changelog=
+changelog=1.1.0
+    - exclude documentation screenshots from the plugin package
+    - bundle the LICENSE file inside the plugin
+  1.0.1
+    - initial public release
 
 # Tags are comma separated with spaces allowed
 tags=python,geocoding,forward geocoder,reverse geocoder,addresses
